@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>g-key</ProjectName>
-    <ProjectGuid>{5EB079AF-C975-40EA-A34F-F631CD6069F2}</ProjectGuid>
-    <RootNamespace>gkey</RootNamespace>
+    <ProjectName>niftykb-ts3</ProjectName>
+    <ProjectGuid>{4631E9E6-A620-4FE1-83F1-48F1F4DB609E}</ProjectGuid>
+    <RootNamespace>NiftyKbTs3</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <SccProjectName>Svn</SccProjectName>
     <SccAuxPath>Svn</SccAuxPath>
@@ -202,7 +202,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="channel.cpp" />
-    <ClCompile Include="gkey_functions.cpp" />
+    <ClCompile Include="niftykb_functions.cpp" />
     <ClCompile Include="plugin.cpp" />
     <ClCompile Include="shell.c" />
     <ClCompile Include="sqlite3.c" />
@@ -210,7 +210,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="channel.h" />
-    <ClInclude Include="gkey_functions.h" />
+    <ClInclude Include="niftykb_functions.h" />
     <ClInclude Include="include\clientlib_publicdefinitions.h" />
     <ClInclude Include="include\plugin_definitions.h" />
     <ClInclude Include="include\public_definitions.h" />
@@ -225,7 +225,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="package.ini" />
-    <None Include="G-Key_ReadMe.odt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

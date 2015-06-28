@@ -1,5 +1,5 @@
 /*
- * TeamSpeak 3 G-key plugin
+ * TeamSpeak 3 NiftyKb plugin
  * Author: Jules Blok (jules@aerix.nl)
  *
  * Copyright (c) 2008-2012 TeamSpeak Systems GmbH
@@ -23,7 +23,7 @@ typedef struct
 typedef std::map<uint64, std::vector<anyID>>::iterator ReplyIterator;
 typedef std::map<uint64, WhisperList>::iterator WhisperIterator;
 
-class GKeyFunctions
+class NiftyKbFunctions
 {
 public:
 	/* Push-to-talk */
@@ -44,8 +44,8 @@ private:
 
 	inline bool CheckAndLog(unsigned int returnCode, char* message = NULL);
 public:
-	GKeyFunctions(void);
-	~GKeyFunctions(void);
+	NiftyKbFunctions(void);
+	~NiftyKbFunctions(void);
 
 	// Error handler
 	void ErrorMessage(uint64 scHandlerID, char* message);

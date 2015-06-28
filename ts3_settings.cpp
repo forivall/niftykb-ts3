@@ -1,5 +1,5 @@
 /*
- * TeamSpeak 3 G-key plugin
+ * TeamSpeak 3 NiftyKb plugin
  * Author: Jules Blok (jules@aerix.nl)
  *
  * Copyright (c) 2010-2012 Jules Blok
@@ -31,7 +31,7 @@ bool TS3Settings::CheckAndLog(int returnCode)
 {
 	if(returnCode != SQLITE_OK)
 	{
-		ts3Functions.logMessage(sqlite3_errmsg(settings), LogLevel_ERROR, "G-Key Plugin", 0);
+		ts3Functions.logMessage(sqlite3_errmsg(settings), LogLevel_ERROR, "NiftyKb Plugin", 0);
 		return true;
 	}
 	return false;

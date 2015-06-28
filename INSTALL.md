@@ -4,7 +4,7 @@
 
 2. Start TeamSpeak 3 and open the "Plugins" dialog (<kbd>Ctrl+Shift+P</kbd>).
 
-3. Make sure the "G-Key Plugin" is checked.
+3. Make sure the "NiftyKb Plugin" is checked.
 
 4. Now to configure the G-Keys for usage with the plugin refer to the Tutorial section.
 

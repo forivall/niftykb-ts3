@@ -1,5 +1,5 @@
 /*
- * TeamSpeak 3 G-key plugin
+ * TeamSpeak 3 NiftyKb plugin
  * Author: Jules Blok (jules@aerix.nl)
  *
  * Copyright (c) 2008-2012 TeamSpeak Systems GmbH

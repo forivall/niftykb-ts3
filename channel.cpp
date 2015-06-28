@@ -89,8 +89,8 @@ int Channel::GetChannelHierarchy(uint64 scHandlerID, Channel* root)
 		char* errorMsg;
 		if(ts3Functions.getErrorMessage(error, &errorMsg) == ERROR_ok)
 		{
-			ts3Functions.logMessage("Error retrieving list of channels:", LogLevel_WARNING, "G-Key Plugin", 0);
-			ts3Functions.logMessage(errorMsg, LogLevel_WARNING, "G-Key Plugin", 0);
+			ts3Functions.logMessage("Error retrieving list of channels:", LogLevel_WARNING, "NiftyKb Plugin", 0);
+			ts3Functions.logMessage(errorMsg, LogLevel_WARNING, "NiftyKb Plugin", 0);
 			ts3Functions.freeMemory(errorMsg);
 		}
 		return 1;
@@ -130,8 +130,8 @@ int Channel::GetChannelHierarchy(uint64 scHandlerID, Channel* root)
 					char* errorMsg;
 					if(ts3Functions.getErrorMessage(error, &errorMsg) == ERROR_ok)
 					{
-						ts3Functions.logMessage("Error getting channel info:", LogLevel_WARNING, "G-Key Plugin", 0);
-						ts3Functions.logMessage(errorMsg, LogLevel_WARNING, "G-Key Plugin", 0);
+						ts3Functions.logMessage("Error getting channel info:", LogLevel_WARNING, "NiftyKb Plugin", 0);
+						ts3Functions.logMessage(errorMsg, LogLevel_WARNING, "NiftyKb Plugin", 0);
 						ts3Functions.freeMemory(errorMsg);
 					}
 					ts3Functions.freeMemory(channels);

@@ -29,7 +29,7 @@
     <ClCompile Include="ts3_settings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gkey_functions.cpp">
+    <ClCompile Include="niftykb_functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="shell.c">
@@ -49,7 +49,7 @@
     <ClInclude Include="ts3_settings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gkey_functions.h">
+    <ClInclude Include="niftykb_functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\clientlib_publicdefinitions.h">
@@ -82,6 +82,5 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="package.ini" />
-    <None Include="G-Key_ReadMe.odt" />
   </ItemGroup>
 </Project>
