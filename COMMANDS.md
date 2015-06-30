@@ -1,6 +1,6 @@
 
 ## Command reference
-This is a full list of commands supported by the plugin with a description about their function. You can send these commands to the plugin with `OutputDebugMessage`.
+This is a full list of commands supported by the plugin with a description about their function. You can send these commands to the plugin via MailSlot `\\.\mailslot\niftykb`, using the mailslot function in niftykb, or any other application.
 Some commands need a parameter, enter a value for the parameter after the command separated by a space. Values themselves may contain spaces.
 
 #### [Communication](#communication-arrow_double_up)
@@ -77,19 +77,8 @@ TS3_PTT_TOGGLE
 Turns push-to-talk on/off on the currently active server. The push-to-talk release will be delayed if Push-to-talk Delay is enabled in the Default profile.
 ##### Example
 Push-to-talk: activate on key press, deactivate on key release.
-```lua
-function OnEvent(event, gkey, family)
-    mkey = GetMKeyState()
-    if gkey == 1 and mkey == 1 then
-        if event == "G_PRESSED" then
-            OutputDebugMessage("TS3_PTT_ACTIVATE")
-        end
-        if event == "G_RELEASED" then
-            OutputDebugMessage("TS3_PTT_DEACTIVATE")
-        end
-    end
-end
-```
+ - Set "press" message to TS3_PTT_ACTIVATE
+ - Set "release" message to TS3_PTT_DEACTIVATE
 
 #### Voice activation
 ##### Commands
@@ -114,23 +103,6 @@ TS3_INPUT_UNMUTE
 TS3_INPUT_TOGGLE  
 ##### Description
 Turns microphone on/off on the currently active server.
-##### Example
-Mute the microphone when G1 is pressed, unmute when G2 is pressed.
-```lua
-function OnEvent(event, gkey, family)
-    mkey = GetMKeyState()
-    if gkey == 1 and mkey == 1 then
-        if event == "G_PRESSED" then
-            OutputDebugMessage("TS3_INPUT_MUTE")
-        end
-    end
-    if gkey == 2 and mkey == 1 then
-        if event == "G_PRESSED" then
-            OutputDebugMessage("TS3_INPUT_UNMUTE")
-        end
-    end
-end
-```
 
 #### Mute speakers/headphones
 TS3_OUTPUT_MUTE  
@@ -149,16 +121,7 @@ TS3_AWAY_TOGGLE &lt;Message>
 Turns away status on current servers on/off with an optional message.
 ##### Example
 Toggle away status with the away message "Studying".
-```lua
-function OnEvent(event, gkey, family)
-    mkey = GetMKeyState()
-    if gkey == 2 and mkey == 1 then
-        if event == "G_PRESSED" then
-            OutputDebugMessage("TS3_AWAY_TOGGLE Studying")
-        end
-    end
-end
-```
+- Set "press" message to "TS3_AWAY_TOGGLE Studying"
 
 #### Globally away status
 ##### Commands
@@ -179,16 +142,7 @@ TS3_SERVER_PREV
 The active server determines where all voice input will be transmitted to and where all commands will be executed. You can change the active server based on Server Name, Unique ID or IP Address. You can also switch to the next/previous server or set the server tab currently opened in the interface as the active server.
 ##### Example
 Set the server named MyServer as the currently active server.
-```lua
-function OnEvent(event, gkey, family)
-    mkey = GetMKeyState()
-    if gkey == 1 and mkey == 1 then
-        if event == "G_PRESSED" then
-            OutputDebugMessage("TS3_ACTIVATE_SERVER MyServer")
-        end
-    end
-end
-```
+- Set "press" message to "TS3_ACTIVATE_SERVER MyServer"
 
 #### Channel joining
 ##### Commands
@@ -211,16 +165,7 @@ TS3_CHANKICK_CLIENTID &lt;Unique ID>
 Allows you to kick a client out of the server or channel based on Nickname of Unique ID. The Unique ID is only viewable if you have installed the extended info theme and is located beneath the nickname.
 ##### Example
 Kick the client nicknamed "Annoyance".
-```lua
-function OnEvent(event, gkey, family)
-    mkey = GetMKeyState()
-    if gkey == 1 and mkey == 1 then
-        if event == "G_PRESSED" then
-            OutputDebugMessage("TS3_KICK_CLIENT Annoyance")
-        end
-    end
-end
-```
+- Set "press" message to "TS3_KICK_CLIENT Annoyance"
 
 ### Whispering [:arrow_double_up:](#command-reference)
 #### Activating/clearing the whisper list
@@ -241,6 +186,7 @@ Add a client to the current whisper list based on Nickname or Unique ID. The Uni
 
 ##### Example
 Push-to-whisper: Set and activate the whisper list and push-to-talk when pressed, clear the whisper list and push-to-talk when released.
+- TODO: support in niftykb's ui
 ```lua
 function OnEvent(event, gkey, family)
     mkey = GetMKeyState()
@@ -271,6 +217,7 @@ Add a channel to the current whisper list based on Name/Path or Channel ID. The 
 The Channel ID is only viewable if you have installed the extended info theme and is located next to the channel name.
 ##### Example
 Push-to-whisper: Set and activate the whisper list and push-to-talk when pressed, clear the whisper list and push-to-talk when released.
+- TODO
 ```lua
 function OnEvent(event, gkey, family)
     mkey = GetMKeyState()
@@ -299,6 +246,7 @@ TS3_REPLY_CLEAR
 Activates/clears the current reply list. This is a special whisper list set per server that remembers the clients that have recently whispered to you, it is not remembered between sessions.
 ##### Example
 Push-to-reply: Activate the reply list and push-to-talk when pressed, clear the reply list and push-to-talk when released.
+- TODO
 ```lua
 function OnEvent(event, gkey, family)
     mkey = GetMKeyState()
@@ -350,15 +298,5 @@ TS3_PLUGIN_COMMAND <command>
 Allows you to send a command to other enabled TeamSpeak3 plugins as you would from the console. The slash (/) prefix may be omitted.
 ##### Example
 Test Plugin: Instruct the Test Plugin to join the channel with channel ID 1.
-```lua
-function OnEvent(event, gkey, family)
-    mkey = GetMKeyState()
-
-    if gkey == 1 and mkey == 1 then
-        if event == "G_PRESSED" then
-            OutputDebugMessage("TS3_PLUGIN_COMMAND /test join 1")
-        end
-    end
-end
-```
+- Set "press" message to "TS3_PLUGIN_COMMAND /test join 1"
 [:arrow_double_up:](#command-reference)
