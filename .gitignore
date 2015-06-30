@@ -1,8 +1,5 @@
-/bin
-/Debug
-/Release
-/plugins
-/ipch
+/Win32
+/x64
 *.user
 *.sdf
 *.opensdf
