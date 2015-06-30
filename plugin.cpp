@@ -58,13 +58,13 @@ bool pluginRunning = false;
 enum PluginError
 {
 	PLUGIN_ERROR_NONE = 0,
-	PLUGIN_ERROR_HOOK_FAILED,
+	PLUGIN_ERROR_CREATESLOT_FAILED,
 	PLUGIN_ERROR_READ_FAILED,
 	PLUGIN_ERROR_NOT_FOUND
 };
 
 // Thread handles
-static HANDLE hDebugThread = NULL;
+static HANDLE hMailslotThread = NULL;
 
 // Mutex handles
 static HANDLE hMutex = NULL;
@@ -704,139 +704,92 @@ void ParseCommand(char* cmd, char* arg)
 	ReleaseMutex(hMutex);
 }
 
-int GetLogitechProcessId(LPDWORD ProcessId)
-{
-	PROCESSENTRY32 entry;
-	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, (DWORD)NULL);
-
-	entry.dwSize = sizeof(PROCESSENTRY32);
-
-	if(Process32First(snapshot, &entry))
-	{
-		while(Process32Next(snapshot, &entry))
-		{
-			if(!strcmp(entry.szExeFile, "LCore.exe"))
-			{
-				*ProcessId = entry.th32ProcessID;
-				CloseHandle(snapshot);
-				return 0;
-			}
-			else if(!strcmp(entry.szExeFile, "LGDCore.exe")) // Legacy support
-			{
-				*ProcessId = entry.th32ProcessID;
-				CloseHandle(snapshot);
-				return 0;
-			}
-		}
-	}
-
-	CloseHandle(snapshot);
-	return 1; // No processes found
-}
-
-void DebugMain(DWORD ProcessId, HANDLE hProcess)
-{
-	DEBUG_EVENT DebugEv; // Buffer for debug messages
-
-	// While the plugin is running
-	while(pluginRunning)
-	{
-		// Wait for a debug message
-		if(WaitForDebugEvent(&DebugEv, PLUGIN_THREAD_TIMEOUT))
-		{
-			// If the debug message is from the logitech driver
-			if(DebugEv.dwProcessId == ProcessId)
-			{
-				// If this is a debug message and it uses ANSI
-				if(DebugEv.dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT && !DebugEv.u.DebugString.fUnicode)
-				{
-					char *DebugStr, *arg;
-
-					// Retrieve debug string
-					DebugStr = (char*)malloc(DebugEv.u.DebugString.nDebugStringLength);
-					ReadProcessMemory(hProcess, DebugEv.u.DebugString.lpDebugStringData, DebugStr, DebugEv.u.DebugString.nDebugStringLength, NULL);
-
-					// Continue the process
-					ContinueDebugEvent(DebugEv.dwProcessId, DebugEv.dwThreadId, DBG_CONTINUE);
-
-					// Seperate the argument from the command
-					arg = strchr(DebugStr, ' ');
-					if(arg != NULL)
-					{
-						// Split the string by inserting a NULL-terminator
-						*arg = (char)NULL;
-						arg++;
-					}
-
-					// Parse debug string
-					ParseCommand(DebugStr, arg);
-
-					// Free the debug string
-					free(DebugStr);
-				}
-				else if(DebugEv.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
-				{
-					// The process is shutting down, exit the debugger
-					return;
-				}
-				else if(DebugEv.dwDebugEventCode == EXCEPTION_DEBUG_EVENT && DebugEv.u.Exception.ExceptionRecord.ExceptionCode != STATUS_BREAKPOINT)
-				{
-					// The process has crashed, exit the debugger
-					return;
-				}
-				else ContinueDebugEvent(DebugEv.dwProcessId, DebugEv.dwThreadId, DBG_CONTINUE); // Continue the process
-			}
-			else ContinueDebugEvent(DebugEv.dwProcessId, DebugEv.dwThreadId, DBG_CONTINUE); // Continue the process
-		}
-	}
-}
-
 /*********************************** Plugin threads ************************************/
 /*
  * NOTE: Never let threads sleep longer than PLUGINTHREAD_TIMEOUT per iteration,
  * the shutdown procedure will not wait that long for the thread to exit.
  */
 
-DWORD WINAPI DebugThread(LPVOID pData)
+#define NIFTYKB_MAILSLOT_PATH "\\\\.\\mailslot\\niftykb"
+
+DWORD WINAPI MailslotThread(LPVOID pData)
 {
-	DWORD ProcessId; // Process ID for the Logitech software
-	HANDLE hProcess; // Handle for the Logitech software
+	HANDLE hSlot; // Handle for the Mailslot
+	hSlot = CreateMailslot(NIFTYKB_MAILSLOT_PATH,
+		0,								// no max msg size
+		MAILSLOT_WAIT_FOREVER,
+		(LPSECURITY_ATTRIBUTES)NULL);	// default security
 
-	// Get process id of the logitech software
-	if(GetLogitechProcessId(&ProcessId))
-	{
-		ts3Functions.logMessage("Could not find Logitech software", LogLevel_ERROR, "NiftyKb Plugin", 0);
-		pluginRunning = FALSE;
-		return PLUGIN_ERROR_NOT_FOUND;
+	if (hSlot == INVALID_HANDLE_VALUE) {
+		ts3Functions.logMessage("Failed CreateMailslot", LogLevel_ERROR, "NiftyKb Plugin", 0);
+		return PLUGIN_ERROR_CREATESLOT_FAILED;
 	}
 
-	// Open a read memory handle to the Logitech software
-	hProcess = OpenProcess(PROCESS_VM_READ, FALSE, ProcessId);
-	if(hProcess==NULL)
+	ts3Functions.logMessage("Mailslot Created", LogLevel_INFO, "NiftyKb Plugin", 0);
+
+	// While the plugin is running
+	while (pluginRunning)
 	{
-		ts3Functions.logMessage("Failed to open Logitech software for reading", LogLevel_ERROR, "NiftyKb Plugin", 0);
-		pluginRunning = FALSE;
-		return PLUGIN_ERROR_READ_FAILED;
+		//DWORD timerWait = MsgWaitForMultipleObjects(1, &hPttDelayTimer, FALSE, PLUGIN_THREAD_TIMEOUT, QS_ALLINPUT);
+		//if (timerWait == WAIT_FAILED) {
+		//	break;
+		//}
+		//if (timerWait == WAIT_OBJECT_0) {
+		//	PTTDelayCallback(NULL, 0, 0);
+		//}
+		DWORD messageSize, messageCount, messageBytesRead;
+		char *messageStr, *arg;
+		DWORD messageTimeout = PLUGIN_THREAD_TIMEOUT;
+
+		BOOL ok;
+
+		ok = GetMailslotInfo(hSlot,
+			(LPDWORD)NULL, // No max size
+			&messageSize,
+			&messageCount,
+			(LPDWORD)NULL);
+			//&messageTimeout);
+		if (!ok) {
+			DWORD err = GetLastError();
+			if (err == WAIT_TIMEOUT) {
+				continue;
+			}
+			ts3Functions.logMessage("Failed GetMailslotInfo", LogLevel_ERROR, "NiftyKb Plugin", 0);
+			return PLUGIN_ERROR_READ_FAILED;
+		}
+		if (messageSize == MAILSLOT_NO_MESSAGE) {
+			::SleepEx(5, TRUE); // allow timers to fire
+			continue;
+		}
+
+		// Retrieve message
+		messageStr = (LPTSTR)malloc(messageSize + 1);
+
+		ok = ReadFile(hSlot,
+			messageStr,
+			messageSize,
+			&messageBytesRead,
+			NULL); // not overlapped i/o
+
+		if (!ok || messageBytesRead == 0) {
+			ts3Functions.logMessage("Failed mailslot ReadFile", LogLevel_ERROR, "NiftyKb Plugin", 0);
+			return PLUGIN_ERROR_READ_FAILED;
+		}
+
+		// Separate the argument from the command
+		arg = strchr(messageStr, ' ');
+		if (arg != NULL) {
+			// Split the string by inserting a NULL-terminator
+			*arg = (char)NULL;
+			arg++;
+		}
+
+		// Parse debug string
+		ParseCommand(messageStr, arg);
+
+		// Free the debug string
+		free(messageStr);
 	}
-
-	// Attach debugger to Logitech software
-	if(!DebugActiveProcess(ProcessId))
-	{
-		// Could not attach debugger, exit debug thread
-		ts3Functions.logMessage("Failed to attach debugger", LogLevel_ERROR, "NiftyKb Plugin", 0);
-		pluginRunning = FALSE;
-		return PLUGIN_ERROR_HOOK_FAILED;
-	}
-
-	ts3Functions.logMessage("Debugger attached to Logitech software", LogLevel_INFO, "NiftyKb Plugin", 0);
-	DebugMain(ProcessId, hProcess);
-
-	// Dettach the debugger
-	DebugActiveProcessStop(ProcessId);
-	ts3Functions.logMessage("Debugger detached from Logitech software", LogLevel_INFO, "NiftyKb Plugin", 0);
-
-	// Close the handle to the Logitech software
-	CloseHandle(hProcess);
 
 	return PLUGIN_ERROR_NONE;
 }
@@ -853,7 +806,7 @@ const char* ts3plugin_name() {
 
 /* Plugin version */
 const char* ts3plugin_version() {
-    return "0.6.1";
+    return "0.0.1";
 }
 
 /* Plugin API version. Must be the same as the clients API major version, else the plugin fails to load. */
@@ -863,7 +816,7 @@ int ts3plugin_apiVersion() {
 
 /* Plugin author */
 const char* ts3plugin_author() {
-    return "Jules Blok";
+    return "Jordan J Klassen";
 }
 
 /* Plugin description */
@@ -899,9 +852,9 @@ int ts3plugin_init() {
 
 	// Start the plugin threads
 	pluginRunning = true;
-	hDebugThread = CreateThread(NULL, (SIZE_T)NULL, DebugThread, 0, 0, NULL);
+	hMailslotThread = CreateThread(NULL, (SIZE_T)NULL, MailslotThread, 0, 0, NULL);
 
-	if(hDebugThread==NULL)
+	if(hMailslotThread==NULL)
 	{
 		ts3Functions.logMessage("Failed to start threads, unloading plugin", LogLevel_ERROR, "NiftyKb Plugin", 0);
 		return 1;
@@ -925,7 +878,7 @@ void ts3plugin_shutdown() {
 	CancelWaitableTimer(hPttDelayTimer);
 
 	// Wait for the thread to stop
-	WaitForSingleObject(hDebugThread, PLUGIN_THREAD_TIMEOUT);
+	WaitForSingleObject(hMailslotThread, PLUGIN_THREAD_TIMEOUT);
 
 	/*
 	 * Note:
@@ -1047,14 +1000,13 @@ void ts3plugin_onConnectStatusChangeEvent(uint64 serverConnectionHandlerID, int 
 		if(!pluginRunning)
 		{
 			DWORD errorCode;
-			if(GetExitCodeThread(hDebugThread, &errorCode) && errorCode != PLUGIN_ERROR_NONE)
+			if(GetExitCodeThread(hMailslotThread, &errorCode) && errorCode != PLUGIN_ERROR_NONE)
 			{
-				switch(errorCode)
-				{
-					case PLUGIN_ERROR_HOOK_FAILED: niftykbFunctions.ErrorMessage(serverConnectionHandlerID, "Could not hook into Logitech software, make sure you're using the 64-bit version of TeamSpeak 3."); break;
-					case PLUGIN_ERROR_READ_FAILED: niftykbFunctions.ErrorMessage(serverConnectionHandlerID, "Not enough permissions to hook into Logitech software, try running as as administrator."); break;
-					case PLUGIN_ERROR_NOT_FOUND: niftykbFunctions.ErrorMessage(serverConnectionHandlerID, "Logitech software not running, start the Logitech software and reload the NiftyKb Plugin."); break;
-					default: niftykbFunctions.ErrorMessage(serverConnectionHandlerID, "NiftyKb Plugin failed to start, check the clientlog for more info."); break;
+				switch(errorCode) {
+				case PLUGIN_ERROR_CREATESLOT_FAILED: niftykbFunctions.ErrorMessage(serverConnectionHandlerID, "Could not create mailslot."); break;
+				case PLUGIN_ERROR_READ_FAILED: niftykbFunctions.ErrorMessage(serverConnectionHandlerID, "Could not read mailslot."); break;
+				case PLUGIN_ERROR_NOT_FOUND: niftykbFunctions.ErrorMessage(serverConnectionHandlerID, "Something not found."); break;
+				default: niftykbFunctions.ErrorMessage(serverConnectionHandlerID, "NiftyKb Plugin failed to start, check the clientlog for more info."); break;
 				}
 			}
 		}
