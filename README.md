@@ -2,6 +2,8 @@
 
 This plugin allows you to use any other application, specifically [niftykb](https://github.com/forivall/niftykb), to control basic teamspeak functions, such as push to talk.
 
+Allows binding special keys, joystick and gamepad buttaons, including Xbox controllers.
+
 Forked from the similar [g-key plugin](https://github.com/Armada651/g-key)
 
 [Command Reference](COMMANDS.md)
